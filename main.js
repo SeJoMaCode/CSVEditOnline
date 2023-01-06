@@ -22,7 +22,7 @@ let openCSV = (e) => {
 
         downloadBtn.style.visibility = 'visible';
       } else {
-        node.innerText = "Error reading file, please double check that you chose the right file and try again."
+        node.innerText = csv+"\nError reading file, please double check that you chose the right file and try again."
         inputBtn.style.visibility = 'visible'
       }
       
