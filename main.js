@@ -1,10 +1,10 @@
-
 let csv
 let mainPY
 let pyodide
 let node = document.getElementById('output');
 let inputBtn = document.getElementById('inputbtn');
 let downloadBtn = document.getElementById('downloadbtn');
+let fileName = document.getElementById('fileName');
 
 let openCSV = (e) => {
     let input = e.target;
@@ -46,6 +46,7 @@ const main = async () => {
     `)
 
     mainPY = await openText('main.py')
+    fileName.value = new Date().toLocaleDateString().replaceAll('/', '-');
     console.log('Loaded')
 
     node.innerText = ''
