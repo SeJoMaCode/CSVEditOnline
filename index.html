@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head>
+      <script src="https://cdn.jsdelivr.net/pyodide/v0.22.0/full/pyodide.js"></script>
+  </head>
+  <body>
+    <input id='inputbtn', style='visibility: hidden', type='file' accept='.csv' onchange="
+                                                                                    openCSV(event);
+                                                                                    inputBtn.style.visibility = 'hidden';
+                                                                                "><br>
+    <div id='output'>Loading</div><br>
+    <button id='downloadbtn', style='visibility: hidden',   onclick=" 
+                                                                download('test.csv', csv);
+                                                                inputBtn.style.visibility = 'visible';
+                                                                node.innerHTML = '';
+                                                                downloadBtn.style.visibility = 'hidden';
+                                                            ">Download</button>
+    <script type="text/javascript" src="main.js"></script>
+  </body>
+</html>
