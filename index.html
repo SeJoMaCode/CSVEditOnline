@@ -2,6 +2,7 @@
 <html>
   <head>
       <script src="https://cdn.jsdelivr.net/pyodide/v0.22.0/full/pyodide.js"></script>
+      <title>CSVEditOnline</title>
   </head>
   <body>
     <input id='inputbtn', style='visibility: hidden', type='file' accept='.csv' onchange="
@@ -9,12 +10,16 @@
                                                                                     inputBtn.style.visibility = 'hidden';
                                                                                 "><br>
     <div id='output'>Loading</div><br>
-    <button id='downloadbtn', style='visibility: hidden',   onclick=" 
+    <form id='downloadbtn', style='visibility: hidden', onsubmit="download((this['name'].value) ? this['name'].value+'.csv' : 'PositivePay.csv', csv)">
+        <input type="text" name="name" value="PositivePay">
+        <input type="submit" value="Download">
+    </form>
+    <!-- <button id='downloadbtn', style='visibility: hidden',   onclick=" 
                                                                 download('test.csv', csv);
                                                                 inputBtn.style.visibility = 'visible';
                                                                 node.innerHTML = '';
                                                                 downloadBtn.style.visibility = 'hidden';
-                                                            ">Download</button>
+                                                            ">Download</button> -->
     <script type="text/javascript" src="main.js"></script>
   </body>
 </html>
