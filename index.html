@@ -2,18 +2,23 @@
 <html>
   <head>
       <script src="https://cdn.jsdelivr.net/pyodide/v0.22.0/full/pyodide.js"></script>
+      <link rel="stylesheet" href="main.css">
       <title>CSVEditOnline</title>
   </head>
   <body>
-    <input id='inputbtn', style='visibility: hidden', type='file' accept='.csv' onchange="
-                                                                                    openCSV(event);
-                                                                                    inputBtn.style.visibility = 'hidden';
-                                                                                "><br>
-    <div id='output'>Loading</div><br>
-    <form id='downloadbtn', style='visibility: hidden', onsubmit="download((this['name'].value) ? this['name'].value+'.csv' : 'PositivePay.csv', csv)">
-        <input id="fileName", type="text" name="name" value="PositivePay">
-        <input type="submit" value="Download">
-    </form>
+    <div class="center">
+        <input id='inputbtn', style='visibility: hidden', type='file' accept='.csv' onchange="
+                                                                                        openCSV(event);
+                                                                                        inputBtn.style.visibility = 'hidden';
+                                                                                    "><br>
+        <div id='headers'></div><br>
+        <div id='output'>Loading</div><br>
+        <button id="editbtn", style="visibility: hidden;", onclick="output.contentEditable='true';">Edit</button>
+        <form id='downloadbtn', style='visibility: hidden', onsubmit="download((this['name'].value) ? this['name'].value+'.csv' : 'PositivePay.csv', csv)">
+            <input id="fileName", type="text" name="name" value="PositivePay">
+            <input type="submit" value="Download">
+        </form>
+    </div>
     <script type="text/javascript" src="main.js"></script>
   </body>
 </html>

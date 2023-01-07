@@ -1,9 +1,11 @@
 let csv
 let mainPY
 let pyodide
-let node = document.getElementById('output');
+let headers = document.getElementById('headers');
+let output = document.getElementById('output');
 let inputBtn = document.getElementById('inputbtn');
 let downloadBtn = document.getElementById('downloadbtn');
+let editbtn = document.getElementById('editbtn');
 let fileName = document.getElementById('fileName');
 
 let openCSV = (e) => {
@@ -15,14 +17,22 @@ let openCSV = (e) => {
       csv = text;
       pyodide.runPython('csv = """'+csv+'"""');
       pyodide.runPython(mainPY);
-
-      if(!pyodide.runPython('failed')){
-        csv = pyodide.runPython('df.to_csv(header=None,index=False)');
-        node.innerText = csv
+      
+      let e = pyodide.runPython('failed')
+      if(!e){
+        csv = pyodide.runPython('df.to_csv(index=False, float_format="%.2f")').split('\n');
+        headers.innerText = csv[0]
+        let temp = '';
+        for(let i = 1; i < csv.length; i++){
+            temp += csv[i]+'\n'
+        }
+        csv = temp.slice(0, -1);
+        output.innerText = csv
 
         downloadBtn.style.visibility = 'visible';
+        editbtn.style.visibility = 'visible';
       } else {
-        node.innerText = csv+"\nError reading file, please double check that you chose the right file and try again."
+        output.innerText = csv+"\nError reading file, please double check that you chose the right file and try again.\n"+e
         inputBtn.style.visibility = 'visible'
       }
       
@@ -49,7 +59,7 @@ const main = async () => {
     fileName.value = new Date().toLocaleDateString().replaceAll('/', '-');
     console.log('Loaded')
 
-    node.innerText = ''
+    output.innerText = ''
     inputBtn.style.visibility = 'visible';
     
 }
