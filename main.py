@@ -9,13 +9,19 @@ for i, col in enumerate(df.columns):
     df.iloc[:, i] = df.iloc[:, i].str.replace('"', '')
 
 try:
-    df = df[['Account', 'Num', 'Original Amount', 'Name', 'Date']]
+    try:
+        df = df[['Account', 'Num', 'Original Amount', 'Name', 'Date']]
+    except:
+        df = df[['Account', 'Num', 'Amount', 'Name', 'Date']]
     df.replace({'': None}, inplace=True)
     df = df.dropna()
 
     df['Account'] = df['Account'].astype(int)
     df['Num'] = df['Num'].astype(int)
-    df['Original Amount'] = abs(df['Original Amount'].astype(float))
+    try:
+        df['Original Amount'] = abs(df['Original Amount'].astype(float))
+    except:
+        df['Amount'] = abs(df['Amount'].astype(float))
     print(df)
 except Exception as e:
      failed = e
