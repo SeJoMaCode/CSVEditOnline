@@ -11,6 +11,20 @@
         });
       });
 
+      function newTable() {
+        let table = document.querySelector("table");
+        if (table) {
+          table.remove();
+        }
+
+        const Headers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+        const data = Array.from({ length: 10 }, () =>
+          Array.from({ length: 10 }, () => "")
+        );
+        table = createTable(Headers, data);
+        document.body.appendChild(table);
+      }
+
       function uploadFile() {
         const fileInput = document.getElementById("fileInput");
         const file = fileInput.files[0];
@@ -142,6 +156,30 @@
           if (rows.length > 0) {
             tbody.removeChild(rows[rows.length - 1]);
           }
+        }
+      }
+
+      function deleteIncompleteRows() {
+        const table = document.querySelector("table");
+        if (table) {
+          const tbody = table.querySelector("tbody");
+          const rows = tbody.querySelectorAll("tr");
+          rows.forEach((row) => {
+            const cells = row.querySelectorAll("textarea");
+            let empty;
+            cells.forEach((cell) => {
+              if (cell.value.trim() != "") {
+                if (empty == null) {
+                  empty = false;
+                }
+              } else {
+                empty = true;
+              }
+            });
+            if (empty) {
+              row.remove();
+            }
+          });
         }
       }
 
@@ -335,7 +373,7 @@
         height: 24px;
         padding: 0;
       }
-      
+
       .rowcontrols {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -363,12 +401,21 @@
   </head>
   <body>
     <div id="toolbar">
-      <label for="fileInput" class="custom-file-upload blue">Choose File</label>
-      <input type="file" id="fileInput" onchange="uploadFile()" />
+      <div>
+        <input type="file" id="fileInput" onchange="uploadFile()" />
+        <label for="fileInput" class="custom-file-upload blue"
+          >Choose File</label
+        >
+        <button class="green" onclick="newTable()">New Table</button>
+      </div>
       <h1>CSVEdit Online</h1>
       <div>
-        <button class="red" onclick="deleteLastRow()">Delete Last Row</button>
-        <button class="green" onclick="saveWithoutHeaders()">Save Without Headers</button>
+        <button class="red" onclick="deleteIncompleteRows()">
+          Delete Incomplete Rows
+        </button>
+        <button class="green" onclick="saveWithoutHeaders()">
+          Save Without Headers
+        </button>
         <button class="green" onclick="save()">Save</button>
       </div>
     </div>
