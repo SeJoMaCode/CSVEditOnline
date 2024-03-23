@@ -1,24 +1,376 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
-      <script src="https://cdn.jsdelivr.net/pyodide/v0.22.0/full/pyodide.js"></script>
-      <link rel="stylesheet" href="main.css">
-      <title>CSVEditOnline</title>
+    <title>Upload File</title>
+    <script>
+      const event = new Event("input");
+      window.addEventListener("resize", function () {
+        const textareas = document.querySelectorAll("textarea");
+        textareas.forEach((textarea) => {
+          textarea.dispatchEvent(event);
+        });
+      });
+
+      function uploadFile() {
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
+        if (!file.name.toLowerCase().endsWith(".csv")) {
+          alert("Please choose a CSV file.");
+          return;
+        }
+        const table = document.querySelector("table");
+        if (table) {
+          table.remove();
+        }
+        const reader = new FileReader();
+        reader.readAsText(file);
+        reader.onload = function () {
+          const text = reader.result;
+          const lines = text
+            .split(/\r?\n/)
+            .filter((line) => line.trim() !== "")
+            .map((line) => line.replace(/"/g, ""));
+          let data = lines.map((line) => line.split(","));
+          let headers = data.shift();
+
+          let nonnumber = false;
+          headers.forEach((header) => {
+            if (/^\d+$/.test(header)) {
+              nonnumber = true;
+            }
+          });
+
+          if (nonnumber) {
+            data.unshift(headers);
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            headers = headers.map((_, i) => alphabet[i]);
+          }
+
+          const table = createTable(headers, data);
+          document.body.appendChild(table);
+        };
+      }
+
+      function createTable(headers, data) {
+        const table = document.createElement("table");
+        const thead = document.createElement("thead");
+        const tbody = document.createElement("tbody");
+        const tr = document.createElement("tr");
+        const rowcontrols = document.createElement("th");
+        rowcontrols.style.width = "0px";
+        tr.appendChild(rowcontrols);
+        headers.forEach((header) => {
+          const th = document.createElement("th");
+          th.textContent = header;
+          tr.appendChild(th);
+        });
+        thead.appendChild(tr);
+        data.forEach((row) => {
+          const tr = createTableRow(row);
+          tbody.appendChild(tr);
+        });
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        return table;
+      }
+
+      function createTableRow(row) {
+        const tr = document.createElement("tr");
+        const rowcontrols = document.createElement("td");
+        const rowcontrolsdiv = document.createElement("div");
+        rowcontrolsdiv.classList.add("rowcontrols");
+
+        const deleteButton = document.createElement("button");
+        deleteButton.classList.add("red");
+        deleteButton.addEventListener("click", function () {
+          this.parentElement.parentElement.parentElement.remove();
+        });
+        rowcontrolsdiv.appendChild(deleteButton);
+
+        const addRowAboveButton = document.createElement("button");
+        addRowAboveButton.classList.add("green");
+        addRowAboveButton.addEventListener("click", function () {
+          const tr = createTableRow(row.map(() => ""));
+          this.parentElement.parentElement.parentElement.before(tr);
+        });
+        rowcontrolsdiv.appendChild(addRowAboveButton);
+
+        const duplicateRowButton = document.createElement("button");
+        duplicateRowButton.classList.add("blue");
+        duplicateRowButton.addEventListener("click", function () {
+          const tr = createTableRow(row.map((cell) => cell));
+          this.parentElement.parentElement.parentElement.after(tr);
+        });
+        rowcontrolsdiv.appendChild(duplicateRowButton);
+
+        const addRowBelowButton = document.createElement("button");
+        addRowBelowButton.classList.add("green");
+        addRowBelowButton.addEventListener("click", function () {
+          const tr = createTableRow(row.map(() => ""));
+          this.parentElement.parentElement.parentElement.after(tr);
+        });
+        rowcontrolsdiv.appendChild(addRowBelowButton);
+
+        rowcontrols.appendChild(rowcontrolsdiv);
+        tr.appendChild(rowcontrols);
+        row.forEach((cell) => {
+          const td = document.createElement("td");
+          const input = createTextarea(cell);
+          td.appendChild(input);
+          tr.appendChild(td);
+        });
+        return tr;
+      }
+
+      function createTextarea(value) {
+        const input = document.createElement("textarea");
+        input.setAttribute("wrap", "soft");
+        input.style.resize = "none";
+        input.addEventListener("input", function () {
+          this.style.height = "auto";
+          this.style.height = this.scrollHeight + "px";
+        });
+        input.value = value;
+        return input;
+      }
+
+      function deleteLastRow() {
+        const table = document.querySelector("table");
+        if (table) {
+          const tbody = table.querySelector("tbody");
+          const rows = tbody.querySelectorAll("tr");
+          if (rows.length > 0) {
+            tbody.removeChild(rows[rows.length - 1]);
+          }
+        }
+      }
+
+      function saveWithoutHeaders() {
+        const table = document.querySelector("table");
+        if (table) {
+          const tbody = table.querySelector("tbody");
+          const rows = tbody.querySelectorAll("tr");
+          const data = [];
+          rows.forEach((row) => {
+            const cells = row.querySelectorAll("textarea");
+            const rowData = [];
+            cells.forEach((cell) => {
+              rowData.push(cell.value);
+            });
+            data.push(rowData);
+          });
+          const csv = data.map((row) => row.join(",")).join("\n");
+          const blob = new Blob([csv], { type: "text/csv" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = fileInput.files[0].name;
+          a.click();
+        }
+      }
+
+      function save() {
+        const table = document.querySelector("table");
+        if (table) {
+          const thead = table.querySelector("thead");
+          const tbody = table.querySelector("tbody");
+          const rows = tbody.querySelectorAll("tr");
+          const data = [];
+          const headers = [];
+          thead.querySelectorAll("th").forEach((th) => {
+            headers.push(th.textContent);
+          });
+          data.push(headers);
+          rows.forEach((row) => {
+            const cells = row.querySelectorAll("textarea");
+            const rowData = [];
+            cells.forEach((cell) => {
+              rowData.push(cell.value);
+            });
+            data.push(rowData);
+          });
+          const csv = data.map((row) => row.join(",")).join("\n");
+          const blob = new Blob([csv], { type: "text/csv" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = fileInput.files[0].name;
+          a.click();
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        margin: 0;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      th,
+      td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 2px solid #ddd;
+        border-left: 2px solid #ddd;
+      }
+
+      th {
+        background-color: #f2f2f2;
+        text-align: center;
+      }
+
+      tr:hover {
+        background-color: #efefef;
+      }
+
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px;
+        border: none;
+        border-radius: 4px;
+        background-color: #dfdfdf;
+        resize: vertical;
+        font-family: Arial, sans-serif;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      .custom-file-upload {
+        display: inline-block;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        background-color: #1e90ff;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+        user-select: none;
+      }
+
+      .custom-file-upload:hover {
+        background-color: #1c80ff;
+      }
+
+      button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .red {
+        background-color: #f44336;
+      }
+
+      button.red:hover {
+        background-color: #da190b;
+      }
+
+      .green {
+        background-color: #4caf50;
+      }
+
+      button.green:hover {
+        background-color: #45a049;
+      }
+
+      .blue {
+        background-color: #1e90ff;
+      }
+
+      .blue:hover {
+        background-color: #1c80ff;
+      }
+
+      /* Icon for deleting a row */
+      .rowcontrols button:nth-child(1) {
+        background-image: url('data:image/svg+xml,<svg fill="%23efefef" height="200px" width="200px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-107.52 -107.52 727.04 727.04" xml:space="preserve" stroke="%23efefef"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><g><g><path d="M0,0v512h512V0H0z M462.452,462.452H49.548V49.548h412.903V462.452z"></path></g></g><g><g><polygon points="355.269,191.767 320.233,156.731 256,220.964 191.767,156.731 156.731,191.767 220.964,256 156.731,320.233 191.767,355.269 256,291.036 320.233,355.269 355.269,320.233 291.036,256 "></polygon></g></g></g></svg>');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 24px;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+      }
+
+      /* Icon for adding a row above */
+      .rowcontrols button:nth-child(2) {
+        background-image: url('data:image/svg+xml,<svg width="64px" height="64px" viewBox="0 0 76 76" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" baseProfile="full" enable-background="new 0 0 76.00 76.00" xml:space="preserve" fill="%23000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill="%23dfdfdf" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" d="M 19,35L 19,43L 27,43L 27,35L 19,35 Z M 30.9999,35L 30.9999,43L 56.9998,43L 56.9999,35L 30.9999,35 Z M 31,32L 57,32L 57,24L 31,24L 31,32 Z M 32,31L 32,25L 56,25L 56,31L 32,31 Z M 21,33L 25,33L 25,30L 28,30L 28,26L 25,26L 25,23L 21,23L 21,26L 18,26L 18,30L 21,30L 21,33 Z M 22,32L 22,29L 19,29L 19,27L 22,27L 22,24L 24,24L 24,27L 27,27L 27,29L 24,29L 24,32L 22,32 Z M 19.0001,46L 19.0001,54L 27.0001,54L 27.0001,46L 19.0001,46 Z M 31.0001,46L 31.0001,54L 57,54L 57,46L 31.0001,46 Z "></path></g></svg>');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 24px;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+      }
+
+      /* Icon for duplicating a row */
+      .rowcontrols button:nth-child(3) {
+        background-image: url('data:image/svg+xml,<svg viewBox="-2.5 -2.5 30.00 30.00" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M8.5 8.5H5.5V20.5H16.5V16.5M19.5 4.5H8.5V16.5H19.5V4.5Z" stroke="%23dfdfdf" stroke-width="1.2"></path></g></svg>');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 24px;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+      }
+
+      /* Icon for adding a row below */
+      .rowcontrols button:nth-child(4) {
+        background-image: url('data:image/svg+xml,<svg width="64px" height="64px" viewBox="0 0 76.00 76.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" baseProfile="full" enable-background="new 0 0 76.00 76.00" xml:space="preserve" fill="%23000000" stroke="%23000000"><g id="SVGRepo_bgCarrier" stroke-width="0" transform="translate(0,0), scale(1)"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="%23000000" stroke-width="0.45599999999999996"></g><g id="SVGRepo_iconCarrier"><path fill="%23dfdfdf" fill-opacity="1" stroke-width="0.00076" stroke-linejoin="round" d="M 19,42L 19,34L 27,34L 27,42L 19,42 Z M 30.9999,42L 30.9999,34L 56.9999,34L 56.9999,42L 30.9999,42 Z M 31,45L 57,45L 57,53L 31,53L 31,45 Z M 32,46L 32,52L 56,52L 56,46L 32,46 Z M 21,44L 25,44L 25,47L 28,47L 28,51L 25,51L 25,54L 21,54L 21,51L 18,51L 18,47L 21,47L 21,44 Z M 22,45L 22,48L 19,48L 19,50L 22,50L 22,53L 24,53L 24,50L 27,50L 27,48L 24,48L 24,45L 22,45 Z M 19.0001,31L 19.0001,23L 27.0001,23L 27.0001,31L 19.0001,31 Z M 31.0001,31L 31.0001,23L 57,23L 57,31L 31.0001,31 Z "></path></g></svg>');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 24px;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+      }
+      
+      .rowcontrols {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-gap: 4px;
+      }
+
+      .rowcontrols button {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+      }
+
+      #toolbar {
+        display: flex;
+        justify-content: space-between;
+        padding: 16px;
+        background-color: #f2f2f2;
+        border-bottom: 2px solid #ccc;
+      }
+
+      #toolbar h1 {
+        margin: 0;
+      }
+    </style>
   </head>
   <body>
-    <div class="center">
-        <input id='inputbtn', style='visibility: hidden', type='file' accept='.csv' onchange="
-                                                                                        openCSV(event);
-                                                                                        inputBtn.style.visibility = 'hidden';
-                                                                                    "><br>
-        <div id='headers'></div><br>
-        <div id='output'>Loading</div><br>
-        <button id="editbtn", style="visibility: hidden;", onclick="output.contentEditable='true';">Edit</button>
-        <form id='downloadbtn', style='visibility: hidden', onsubmit="download((this['name'].value) ? this['name'].value+'.csv' : 'PositivePay.csv', csv)">
-            <input id="fileName", type="text" name="name" value="PositivePay">
-            <input type="submit" value="Download">
-        </form>
+    <div id="toolbar">
+      <label for="fileInput" class="custom-file-upload blue">Choose File</label>
+      <input type="file" id="fileInput" onchange="uploadFile()" />
+      <h1>CSVEdit Online</h1>
+      <div>
+        <button class="red" onclick="deleteLastRow()">Delete Last Row</button>
+        <button class="green" onclick="saveWithoutHeaders()">Save Without Headers</button>
+        <button class="green" onclick="save()">Save</button>
+      </div>
     </div>
-    <script type="text/javascript" src="main.js"></script>
   </body>
 </html>
